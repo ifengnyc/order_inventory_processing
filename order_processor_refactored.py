@@ -93,36 +93,7 @@ def process_inventory_logic(stock, shopify, exception_cases):
 
 # --- Streamlit UI ---
 
-st.set_page_config(
-    page_title="Data Processor Pro",
-    page_icon="✨",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-st.title("📄 Data Processor Pro")
-
-# --- Custom CSS for modern UI ---
-st.markdown("""
-    <style>
-    .reportview-container {
-        background: #f0f2f6;
-    }
-    .sidebar .sidebar-content {
-        background: #ffffff;
-    }
-    .stButton>button {
-        background-color: #4CAF50;
-        color: white;
-        font-weight: bold;
-        border-radius: 12px;
-        padding: 10px 24px;
-    }
-    .stButton>button:hover {
-        background-color: #45a049;
-    }
-    </style>
-""", unsafe_allow_html=True)
+st.title("Data Processor")
 
 # --- Initialize Session State ---
 if 'item_data' not in st.session_state:
@@ -143,31 +114,25 @@ if 'shopify' not in st.session_state:
     st.session_state.shopify = None
 
 
-# --- Sidebar for File Uploads ---
-with st.sidebar:
-    st.header("📂 Upload Files")
-    st.info("Upload all necessary files here. Item Data and Exception Cases will be saved for future sessions.")
-
-    uploaded_item_data = st.file_uploader("Upload Item Data File (xlsx)", type=["xlsx"], key="item_data_uploader")
-    uploaded_exception_cases = st.file_uploader("Upload Exception Cases File (xlsx)", type=["xlsx"], key="exception_cases_uploader")
-    uploaded_orders = st.file_uploader("Upload Orders File (xlsx)", type=["xlsx"], key="orders_uploader")
-    uploaded_stock = st.file_uploader("Upload Stock File (xlsx)", type=["xlsx"], key="stock_uploader")
-    uploaded_shopify = st.file_uploader("Upload Shopify File (csv)", type=["csv"], key="shopify_uploader")
-
 # --- UI Tabs ---
 tab1, tab2 = st.tabs(["Order Processing", "Inventory Processing"])
 
 with tab1:
-    st.header("🛒 Order Processing")
+    st.header("Order Processing")
+    st.info("Upload Item Data and Exception Cases here. They will be saved for future use in both processing tabs.")
 
-    with st.expander("Process Your Orders", expanded=True):
-        if uploaded_item_data:
-            try:
-                st.session_state.item_data = pd.read_excel(uploaded_item_data)
-                st.session_state.item_data.to_excel(ITEM_DATA_FILE, index=False)
-                st.success("Item data file uploaded and saved successfully!")
-            except Exception as e:
-                st.error(f"Error reading or saving item data file: {e}")
+    # --- File Uploads for Order Processing ---
+    uploaded_item_data = st.file_uploader("Upload Item Data File (xlsx)", type=["xlsx"], key="item_data_uploader")
+    uploaded_exception_cases = st.file_uploader("Upload Exception Cases File (xlsx)", type=["xlsx"], key="exception_cases_uploader")
+    uploaded_orders = st.file_uploader("Upload Orders File (xlsx)", type=["xlsx"], key="orders_uploader")
+
+    if uploaded_item_data:
+        try:
+            st.session_state.item_data = pd.read_excel(uploaded_item_data)
+            st.session_state.item_data.to_excel(ITEM_DATA_FILE, index=False)
+            st.success("Item data file uploaded and saved successfully!")
+        except Exception as e:
+            st.error(f"Error reading or saving item data file: {e}")
 
     if uploaded_exception_cases:
         try:
@@ -186,7 +151,7 @@ with tab1:
 
     # --- Processing Trigger ---
     st.subheader("Process Orders")
-    if st.button("🚀 Process Orders", key="process_orders_button"):
+    if st.button("Process Orders", key="process_orders_button"):
         if st.session_state.item_data is not None and st.session_state.exception_cases is not None and st.session_state.orders is not None:
             with st.spinner("Processing orders..."):
                 processed_delivery = process_orders_logic(
@@ -208,16 +173,19 @@ with tab1:
 
 
 with tab2:
-    st.header("📦 Inventory Processing")
+    st.header("Inventory Processing")
     st.info("This processor uses the saved Exception Cases file. If you need to update it, please do so in the 'Order Processing' tab.")
 
-    with st.expander("Process Your Inventory", expanded=True):
-        if uploaded_stock:
-            try:
-                st.session_state.stock = pd.read_excel(uploaded_stock)
-                st.success('Stock file uploaded successfully!')
-            except Exception as e:
-                st.error(f"Error reading stock file: {e}")
+    # --- File Uploads for Inventory Processing ---
+    uploaded_stock = st.file_uploader("Upload Stock File (xlsx)", type=["xlsx"], key="stock_uploader")
+    uploaded_shopify = st.file_uploader("Upload Shopify File (csv)", type=["csv"], key="shopify_uploader")
+
+    if uploaded_stock:
+        try:
+            st.session_state.stock = pd.read_excel(uploaded_stock)
+            st.success('Stock file uploaded successfully!')
+        except Exception as e:
+            st.error(f"Error reading stock file: {e}")
 
     if uploaded_shopify:
         try:
@@ -228,7 +196,7 @@ with tab2:
 
     # --- Processing Trigger ---
     st.subheader("Process Inventories")
-    if st.button("🚀 Process Inventories", key="process_inventory_button"):
+    if st.button("Process Inventories", key="process_inventory_button"):
         if st.session_state.exception_cases is not None and st.session_state.stock is not None and st.session_state.shopify is not None:
             with st.spinner("Processing inventories..."):
                 processed_shopify = process_inventory_logic(
